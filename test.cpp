@@ -116,13 +116,13 @@ class Choosestate{
                     // change to a function call that keeps checking
                     triggerevent->phaseL1;
                     safety.attach(&triggerevent->standby, windowtime);
-                    //function to shift
+                    for 
                 }
             }
             else{
                 triggerevent->phaseL1;
                 safety.attach(&triggerevent->phaseL1);
-                // shift priority array
+                for(int i; i=0)
             }
             break;
         case 0:
