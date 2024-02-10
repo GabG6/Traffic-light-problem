@@ -55,35 +55,75 @@ class Getstate{
 
 class Triggerevent{ // funciton to trigger outputs in accordance with the phase
     private:
-    DigitalOut mBuzzer; PwmOut mMotor; DigitalOut mL1g; DigitalOut mL1r;
-    DigitalOut mL2g; DigitalOut mL2r; DigitalOut mPedg ;DigitalOut mPedr;
+        DigitalOut mBuzzer;
+        PwmOut mMotor;
+        DigitalOut mL1g;
+        DigitalOut mL1r;
+        DigitalOut mL2g;
+        DigitalOut mL2r;
+        DigitalOut mPedg;
+        DigitalOut mPedr;
     public:
-    Triggerevent(){}
-    Triggerevent():mMotor(p21),mBuzzer(p22),mL1g(p23),mL1r(p24),mL2g(p25), mL2r(p26),mPedg(p27),mPedr(p28){}
+        Triggerevent():
+        mMotor(p21),
+        mBuzzer(p22),
+        mL1g(p23),
+        mL1r(p24),
+        mL2g(p25),
+        mL2r(p26),
+        mPedg(p27),
+        mPedr(p28){}
+
     void phaseL1(){ // trigger phase L1
-        mL1g = 1; mL2g = 0; mPedg = 0;
-        Ml1r =0; Ml2r = 1; mPedg = 1;
-        mBuzzer = 0; mMotor = 0;
+        mL1g = 1;
+        mL2g = 0; 
+        mPedg = 0;
+        mL1r =0;
+        mL2r = 1;
+        mPedr = 1;
+        mBuzzer = 0;
+        mMotor = 0;
+        
     }
     void phaseL2(){
-        mL1g = 0; mL2g = 1; mPedg = 0;
-        Ml1r =1; Ml2r = 0; mPedg = 1;
-        mBuzzer = 0; mMotor = 0;
+        mL1g = 0;
+        mL2g = 1;
+        mPedg = 0;
+        mL1r =1;
+        mL2r = 0;
+        mPedr = 1;
+        mBuzzer = 0;
+        mMotor = 0;
     }
     void phasePed(){
-        mL1g = 0; mL2g = 0; mPedg = 1;
-        Ml1r =1; Ml2r = 1; mPedg = 0;
-        mBuzzer = 0; mMotor = 1;
+        mL1g = 0;
+        mL2g = 0;
+        mPedg = 1;
+        mL1r =1;
+        mL2r = 1;
+        mPedr = 0;
+        mBuzzer = 0;
+        mMotor = 1;
     }
     void phaseSOS(){
-        mL1g = 0; mL2g = 0; mPedg = 0;
-        Ml1r =1; Ml2r = 1; mPedg = 1;
-        mBuzzer = 1; mMotor = 0;
+        mL1g = 0;
+        mL2g = 0;
+        mPedg = 0;
+        mL1r =1;
+        mL2r = 1;
+        mPedg = 1;
+        mBuzzer = 1;
+        mMotor = 0;
     }
     void standby(){
-        mL1g = 0; mL2g = 0; mPedg = 0;
-        Ml1r =1; Ml2r = 1; mPedg = 1;
-        mBuzzer = 0; mMotor = 0;
+        mL1g = 0;
+        mL2g = 0;
+        mPedg = 0;
+        mL1r =1;
+        mL2r = 1;
+        mPedg = 1;
+        mBuzzer = 0;
+        mMotor = 0;
     }
 };
 
@@ -102,7 +142,9 @@ class Choosestate{
                              0,0,0}; 
         // add some form of initialisation or lower, by conditions
     } // remember to configure destructor
-
+    void shift priority(bool direction){
+        
+    }
     void choosestate(int windowtime){
         // poll for waiting car
         switch(getstate->isL1waiting()) { 
@@ -144,8 +186,6 @@ class Choosestate{
         }
     }
 };
-
-
 
 int main() {
     Interface interface(USBTX, USBRX); // use USBTX,USBRX for pc, p9,p10 for bluetooth // integrate user input for selecting mode

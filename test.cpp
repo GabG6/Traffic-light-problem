@@ -1,89 +1,127 @@
 #include "mbed.h"
 #include <stdio.h>
 
-class Interface{ // class that handles overriding and displaying the system
-    private:
-    Serial mMedium; Getstate *getstate; Triggerevent
-    public:
-    Interface(){}
-    Interface(PinName port1, PinName port2):mMedium(port1,port2){getstate = new Getstate()}
-    void display(){
-        mMedium.printf("working");
-    }
-    char override(){
-        if(mMedium.readable()){
-            return mMedium.getc();
-        }
-    }
-};
 
 class Getstate{
     private:
-    DigitalIn mL2IRclose; AnalogIn mL2IRfar; DigitalIn mL1IRclose; AnalogIn mL1IRfar;
-    DigitalIn mPedButton;
+        DigitalIn mL2IRclose;
+        AnalogIn mL2IRfar;
+        DigitalIn mL1IRclose;
+        AnalogIn mL1IRfar;
+        DigitalIn mPedButton;
     public:
-    Getstate(){}
-    Getstate():mL2IRclose(p20),mL2IRfar(p19),mL1IRclose(p18),mL1IRfar(p17),mPedButton(p16){} 
-    // initialise the pins in the constructor
-    int isL1Waiting(){
-        // add some processing to poll multiple times (maybe using threading)
+        Getstate():
+        mL2IRclose(p20),
+        mL2IRfar(p19),
+        mL1IRclose(p18),
+        mL1IRfar(p17),
+        mPedButton(p16){}
+        
+    bool isL1Waiting(){
+        
+        for(int i=0; i<10; i++){
         if(mL1IRfar==1){ // compute all states as boolean
             return 1;
         }
         else{
             return 0;
         }
-    }
-    int isL2Waiting(){
+        }
+        }
+    bool isL2Waiting(){
+        for(int i=0; i<10; i++){
         if(mL2IRfar==1){
             return 1;
         }
         else{
             return 0;
         }
-    }
-    int isPedWaiting(){
+        }
+        }
+    bool isPedWaiting(){
+        for(int i=0; i<10; i++){
         if(mPedButton==1){
             return 1;
+        }
         else{
             return 0;
         }
         }
-    }
-    }
+        }
 };
 
 class Triggerevent{ // funciton to trigger outputs in accordance with the phase
     private:
-    DigitalOut mBuzzer; PwmOut mMotor; DigitalOut mL1g; DigitalOut mL1r;
-    DigitalOut mL2g; DigitalOut mL2r; DigitalOut mPedg ;DigitalOut mPedr;
+        DigitalOut mBuzzer;
+        PwmOut mMotor;
+        DigitalOut mL1g;
+        DigitalOut mL1r;
+        DigitalOut mL2g;
+        DigitalOut mL2r;
+        DigitalOut mPedg;
+        DigitalOut mPedr;
     public:
-    Triggerevent(){}
-    Triggerevent():mMotor(p21),mBuzzer(p22),mL1g(p23),mL1r(p24),mL2g(p25), mL2r(p26),mPedg(p27),mPedr(p28){}
-    void phaseL1(){ // trigger phase L1
-        mL1g = 1; mL2g = 0; mPedg = 0;
-        Ml1r =0; Ml2r = 1; mPedg = 1;
-        mBuzzer = 0; mMotor = 0;
+        Triggerevent():
+        mMotor(p21),
+        mBuzzer(p22),
+        mL1g(p23),
+        mL1r(p24),
+        mL2g(p25),
+        mL2r(p26),
+        mPedg(p27),
+        mPedr(p28){}
+    /**
+     * Receive the current state of the traffic lights as
+     * an integer
+     * @return 0 = Lane 1 green,
+     * @return 1 = Lane 2 green,
+     * @return 2 = Pedestrian green,
+     * @return 3 = all red,
+    */
+    int getlights(){
+        if(mL1g==1){
+            return 0;
+        }
+        else if(mL2g==1){
+            return 1;
+        }
+        else if(mPedg==1){
+            return 2;
+        }
+        else{
+            return 3;
+        }
     }
-    void phaseL2(){
-        mL1g = 0; mL2g = 1; mPedg = 0;
-        Ml1r =1; Ml2r = 0; mPedg = 1;
-        mBuzzer = 0; mMotor = 0;
+
+    void setLights(bool l1g, bool l2g, bool pedg, bool l1r, bool l2r, bool pedr, bool buzzer, bool motor) {
+        mL1g = l1g;
+        mL2g = l2g;
+        mPedg = pedg;
+        mL1r = l1r;
+        mL2r = l2r;
+        mPedr = pedr;
+        mBuzzer = buzzer;
+        mMotor = motor;
     }
-    void phasePed(){
-        mL1g = 0; mL2g = 0; mPedg = 1;
-        Ml1r =1; Ml2r = 1; mPedg = 0;
-        mBuzzer = 0; mMotor = 1;
+
+    void phaseL1() { 
+        setLights(1, 0, 0, 0, 1, 1, 0, 0);
     }
-    void phaseSOS(){
-        mL1g = 0; mL2g = 0; mPedg = 0;
-        Ml1r =1; Ml2r = 1; mPedg = 1;
-        mBuzzer = 1; mMotor = 0;
+
+    void phaseL2() {
+        setLights(0, 1, 0, 1, 0, 1, 0, 0);
     }
-    void standby(){
-        mL1g = 0; mL2g = 0; mPedg = 0;
-        Ml1r =1; Ml2r = 1; mPedg = 1;
-        mBuzzer = 0; mMotor = 0;
+
+    void phasePed() {
+        setLights(0, 0, 1, 1, 1, 0, 0, 1);
+    }
+
+    void phaseSOS() {
+        setLights(0, 0, 0, 1, 1, 1, 1, 0);
+    }
+
+    void standby() {
+        setLights(0, 0, 0, 1, 1, 1, 0, 0);
     }
 };
 
@@ -93,7 +131,6 @@ class Choosestate{
     Triggerevent *triggerevent;
     Timeout safety; 
     public:
-    Choosestate(){} 
     Choosestate(){
         getstate = new Getstate();
         triggerevent = new Triggerevent();
@@ -102,13 +139,28 @@ class Choosestate{
                              0,0,0}; 
         // add some form of initialisation or lower, by conditions
     } // remember to configure destructor
-
+    /**
+     * @brief Takes current state of system and configures the next state
+     * @param windowtime the configured safety window
+    */
     void choosestate(int windowtime){
-        // poll for waiting car
-        switch(getstate->isL1waiting()) { 
+        switch(getstate->isL1Waiting()) { // poll for waiting car
         case 1:
-            // check if l1 already green
-            // check current light state
+            switch(triggerE->getlights()){ // check current light stat
+                case 0:
+                    /** case where car is detected at green light */
+                    break;
+                case 1:
+                case 2:
+                    /** cases where other lights are green at detection, wait for priority*/
+
+                    break;
+                case 3: 
+                    /** case where all lights are red, since it means a process has finished, simply begin */
+                    triggerE->phaseL1;
+                    
+                    break;
+            }
             if(triggerevent->mL2g==1 || triggerevent->mPedg==1){
                 // check for main priority
                 if(priority[0][0]==1){
@@ -116,7 +168,7 @@ class Choosestate{
                     // change to a function call that keeps checking
                     triggerevent->phaseL1;
                     safety.attach(&triggerevent->standby, windowtime);
-                    for 
+                    
                 }
             }
             else{
@@ -146,14 +198,21 @@ class Choosestate{
 };
 
 
+Getstate getst;
+Triggerevent triggerE;
+Choosestate choose;
 
 int main() {
     Interface interface(USBTX, USBRX); // use USBTX,USBRX for pc, p9,p10 for bluetooth // integrate user input for selecting mode
     // create variable for chosen safety window to pass to functions
     // Test how to check the state of traffic lights
     while(1){
-        interface.display();
-        wait(0.5);
+        choose.choosestate()
+        
+        getst.isL1Waiting==1 ? triggerE.phaseL1 : 0;
+        getst.isL2Waiting==1 ? triggerE.phaseL2 : 0;
+        getst.isPedWaiting==1 ? triggerE.phasePed:0;
 
     }
+    triggerE.getlights()
 }
