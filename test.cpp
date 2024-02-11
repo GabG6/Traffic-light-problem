@@ -5,10 +5,11 @@
 class Getstate{
     private:
         DigitalIn mL2IRclose;
-        AnalogIn mL2IRfar;
+        DigitalIn mL2IRfar;
         DigitalIn mL1IRclose;
-        AnalogIn mL1IRfar;
+        DigitalIn mL1IRfar;
         DigitalIn mPedButton;
+    
     public:
         Getstate():
         mL2IRclose(p20),
@@ -16,36 +17,66 @@ class Getstate{
         mL1IRclose(p18),
         mL1IRfar(p17),
         mPedButton(p16){}
-        
+    /**
+     * @brief check if a car has passed L1
+    */
+    bool hasL1Passed(){
+        int averagecount = 0;
+        for(int i=0; i<10; i++){
+            if(mL1IRclose==1){
+                averagecount++;
+            }
+        }
+        return (averagecount>=7);
+    }
+    /**
+     * @brief check if a car has passed L2
+    */
+    bool hasL2Passed(){
+        int averagecount = 0;
+        for(int i=0; i<10; i++){
+            if(mL2IRclose==1){
+                averagecount++;
+            }
+        }
+        return (averagecount>=7);
+    }
+    /**
+     * @brief check if a car is waiting L1
+    */
     bool isL1Waiting(){
-        
+        int averagecount = 0;
         for(int i=0; i<10; i++){
-        if(mL1IRfar==1){ // compute all states as boolean
-            return 1;
+            if(mL1IRfar==1){
+                averagecount++;
+            }
         }
-        else{
-            return 0;
+        return (averagecount>=7);
         }
-        }
-        }
+    /**
+     * @brief check if a car is waiting L2
+    */
     bool isL2Waiting(){
+        int averagecount = 0;
         for(int i=0; i<10; i++){
-        if(mL2IRfar==1){
-            return 1;
+            if(mL2IRfar==1){
+                averagecount++;
+            }
         }
-        else{
-            return 0;
+        return (averagecount>=7);
         }
         }
-        }
+    /**
+     * @brief check if a pedestrian is waiting
+    */
     bool isPedWaiting(){
         for(int i=0; i<10; i++){
-        if(mPedButton==1){
-            return 1;
-        }
-        else{
-            return 0;
-        }
+            if(mPedButton==1){
+                return 1;
+            }
+            else{
+                return 0;
+            }
         }
         }
 };
@@ -140,15 +171,35 @@ class Choosestate{
         // add some form of initialisation or lower, by conditions
     } // remember to configure destructor
     /**
+     * @brief alter the waiting priority
+     * @param action The chosen alteration of the priority list
+     *              - "0": moves priority 2 to 1
+     *              - "1": add member to priority 1
+     *              - "2": add member to priority 2 
+     * @param member The chosen member that is applying the alteration
+     *              - "1": L1
+     *              - "2": L2
+     *              - "3": Ped 
+    */
+    void changePrior(int action, int member){
+        else{
+            switch(action*10+member){
+                case 1:
+
+            }
+        }
+
+    }
+    /**
      * @brief Takes current state of system and configures the next state
      * @param windowtime the configured safety window
     */
     void choosestate(int windowtime){
-        switch(getstate->isL1Waiting()) { // poll for waiting car
-        case 1:
+        if(getstate->isL1Waiting()){
             switch(triggerE->getlights()){ // check current light stat
                 case 0:
-                    /** case where car is detected at green light */
+                    /** case where car is detected and has green light */
+
                     break;
                 case 1:
                 case 2:
@@ -161,8 +212,6 @@ class Choosestate{
                     
                     break;
             }
-            if(triggerevent->mL2g==1 || triggerevent->mPedg==1){
-                // check for main priority
                 if(priority[0][0]==1){
                     // if first priority, wait for other light to turn red
                     // change to a function call that keeps checking
@@ -176,32 +225,21 @@ class Choosestate{
                 safety.attach(&triggerevent->phaseL1);
                 for(int i; i=0)
             }
-            break;
-        case 0:
-            break;
         }
-        switch(getstate->isL2Waiting()){
-            case 1:    
-                if(triggerevent->mL2g==1 || triggerevent->mPedg==1){
-                    
-                }
-            break;
+        if(getstate->isL2Waiting()){
+  
+            if(triggerevent->mL2g==1 || triggerevent->mPedg==1){   
+            }
         }
-        switch(getstate->isPedWaiting()){
-            case 1:
-                if(triggerevent->mL1g==1 || triggerevent->mL2g==1){
-
-                }
-
+        if(getstate->isPedWaiting()){
+            if(triggerevent->mL1g==1 || triggerevent->mL2g==1){
+            }
         }
     }
 };
 
-
-Getstate getst;
 Triggerevent triggerE;
-Choosestate choose;
-
+Choosestate choosest;
 int main() {
     Interface interface(USBTX, USBRX); // use USBTX,USBRX for pc, p9,p10 for bluetooth // integrate user input for selecting mode
     // create variable for chosen safety window to pass to functions
@@ -214,5 +252,6 @@ int main() {
         getst.isPedWaiting==1 ? triggerE.phasePed:0;
 
     }
-    triggerE.getlights()
+    triggerE.getlights();
+    choosest.changePrior();
 }
