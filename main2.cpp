@@ -175,7 +175,7 @@ class Triggerevent{
     }
 
     public:
-    bool waitingFlag;
+    bool stndbyFlag;
     Triggerevent():
         mBuzzer(p22),
         mMotor(p21),
@@ -184,7 +184,7 @@ class Triggerevent{
         mL2g(p25),
         mL2r(p26),
         mPedg(p27),
-        mPedr(p28){waitingFlag = false;}
+        mPedr(p28){stndbyFlag = false;}
 
     /**
      * Receive the current state of the traffic lights as
@@ -211,26 +211,23 @@ class Triggerevent{
 
     void phaseL1() { 
         setLights(1, 0, 0, 0, 1, 1, 0, 0);
-        waitingFlag = false;
     }
 
     void phaseL2() {
         setLights(0, 1, 0, 1, 0, 1, 0, 0);
-        waitingFlag = false;
     }
 
     void phasePed() {
         setLights(0, 0, 1, 1, 1, 0, 0, 1);
-        waitingFlag = false;
     }
 
     void phaseSOS() {
         setLights(0, 0, 0, 1, 1, 1, 1, 0);
-        waitingFlag = false;
     }
 
     void standby() {
     setLights(0, 0, 0, 1, 1, 1, 0, 0);
+    stndbyFlag = true;
     }
     };
 
@@ -240,7 +237,6 @@ class Choosestate{
     Getstate     getstate;
     Triggerevent triggerevent;
     Timeout      safety;
-    Timeout      waitTime;
     Serial pc;
     bool noOne;
     /**priority list*/
@@ -249,14 +245,17 @@ class Choosestate{
     int count;
     /**Default flag*/
     bool dFlag;
+    /**car passed flag*/
+    bool cFlag;
 
     public:
     Choosestate():pc(USBTX, USBRX){
     bool priority[2][3] = {0,0,0,
                            0,0,0};
-    count     = 0;
-    dFlag     = false;
-    noOne     = true;
+    count = 0;
+    dFlag = false;
+    cFlag = false;
+    noOne = true;
     // add some form of initialisation or lower, by conditions
     } // remember to configure destructor
     
@@ -332,7 +331,7 @@ class Choosestate{
      * @param windowTimeL2 safety window for L2
      * @param windowTimePed safety window Ped
     */
-    void choosestate(int windowTimeL1, int windowTimeL2, int windowTimePed, int waitL1, int waitL2, int waitPed){
+    void choosestate(int windowTimeL1, int windowTimeL2, int windowTimePed){
         /**check Lane 1 state*/
         noOne = true;
         for(int i = 0; i<2; i++){
@@ -362,14 +361,9 @@ class Choosestate{
                         }
                         else{
                             /**if maximum have passed, turn lights red and reset count*/
-                            if(priorEmpty()){
-                                count = 0;
-                            }
-                            else{
                             pc.printf("cars over max\n\r");
                             triggerevent.standby();
-                            count = 0;
-                            }
+                            count = 0;                                
                         }
                     }
                 break;
@@ -379,9 +373,8 @@ class Choosestate{
                     /** cases where other lights are green at detection, get priority if dont have*/
                     pc.printf("other light green\n\r");
                     if(dFlag){
-                    if((priorEmpty()||priority[0][0])&&!triggerevent.waitingFlag){
-                        triggerevent.waitingFlag = true;
-                        waitTime.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL1-waitL1);
+                    if(priorEmpty()||priority[0][0]){
+                        triggerevent.phaseL1();
                         dFlag = false;
                         changePrior(0,1);
                         safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL1);
@@ -406,21 +399,19 @@ class Choosestate{
                     /** case where all lights are red, since it means a process has finished,
                      * so begin if have priority one, move priority up, and reset count
                      */
-                    pc.printf("all red\n\r");
-                    if((priorEmpty())&& !triggerevent.waitingFlag){
+                    pc.printf("all red");
+                    if(priorEmpty()){
                         pc.printf("On with prior empty\n\r");
                         count = 0;
-                        triggerevent.waitingFlag = true;
-                        waitTime.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL1-waitL1);
+                        triggerevent.phaseL1();
                         dFlag = false;
                         safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL1);
                     }
-                    else if((priority[0][0])&&!triggerevent.waitingFlag){
+                    else if(priority[0][1]){
                         pc.printf("On with priority\n\r");
                         changePrior(0,1);
                         count = 0;
-                        triggerevent.waitingFlag = true;
-                        waitTime.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL1-waitL1);
+                        triggerevent.phaseL1();
                         dFlag = false;
                         safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL1);
                     }
@@ -453,14 +444,9 @@ class Choosestate{
                         }
                         else{
                             /**if maximum have passed, turn lights red and reset count*/
-                            if(priorEmpty()){
-                                count = 0;
-                            }
-                            else{
-                            pc.printf("cars over max\n\r");
+                            pc.printf("over max\n\r");
                             triggerevent.standby();
-                            count = 0;
-                            }                              
+                            count = 0;                                
                         }
                     }
                 break;
@@ -470,9 +456,8 @@ class Choosestate{
                     /** cases where other lights are green at detection, get priority if dont have*/
                     pc.printf("other lights on\n\r");
                     if(dFlag){
-                        if((priorEmpty()||priority[0][1])&&!triggerevent.waitingFlag){
-                            triggerevent.waitingFlag = true;
-                            waitTime.attach(&triggerevent, &Triggerevent::phaseL2, windowTimeL2-waitL2);
+                        if(priorEmpty()||priority[0][1]){
+                            triggerevent.phaseL2();
                             changePrior(0,1);
                             dFlag = false;
                             safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL2);
@@ -497,20 +482,18 @@ class Choosestate{
                     /** case where all lights are red, since it means a process has finished,
                     * so begin if have priority one, move priority up, and reset count
                     */
-                    if((priorEmpty())&&!triggerevent.waitingFlag){
+                    if(priorEmpty()){
                         count = 0;
-                        triggerevent.waitingFlag = true;
-                        waitTime.attach(&triggerevent, &Triggerevent::phaseL2, windowTimeL1-waitL2);
+                        triggerevent.phaseL2();
                         dFlag = false;
-                        safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL2);
+                        safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL1);
                         }
-                    else if((priority[0][1])&&!triggerevent.waitingFlag){
+                    else if(priority[0][1]){
                         changePrior(0,1);
                         count = 0;
-                        triggerevent.waitingFlag = true;
-                            waitTime.attach(&triggerevent, &Triggerevent::phaseL2, windowTimeL1-waitL2);
+                        triggerevent.phaseL2();
                         dFlag = false;
-                        safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL2);
+                        safety.attach(&triggerevent, &Triggerevent::standby, windowTimeL1);
                     }
                 break;
             }
@@ -530,9 +513,8 @@ class Choosestate{
                 /**another light is green*/
                 pc.printf("another waiting \n\r");
                 if(dFlag){
-                    if((priorEmpty()||priority[0][2])&&!triggerevent.waitingFlag){
-                        triggerevent.waitingFlag = true;
-                        waitTime.attach(&triggerevent, &Triggerevent::phasePed, windowTimePed-waitPed);
+                    if(priorEmpty()||priority[0][2]){
+                        triggerevent.phasePed();
                         changePrior(0,1);
                         dFlag = false;
                         safety.attach(&triggerevent, &Triggerevent::standby, windowTimePed);
@@ -554,16 +536,14 @@ class Choosestate{
                 break;
 
                 case 3:
-                if((priorEmpty())&&!triggerevent.waitingFlag){
-                    triggerevent.waitingFlag = true;
-                    waitTime.attach(&triggerevent, &Triggerevent::phasePed, windowTimePed-waitPed);
+                if(priorEmpty()){
+                    triggerevent.phasePed();
                     dFlag = false;
                     safety.attach(&triggerevent, &Triggerevent::standby, windowTimePed);
                     }
-                else if((priority[0][2]&&!triggerevent.waitingFlag)){
+                else if(priority[0][2]){
                     changePrior(0,1);
-                    triggerevent.waitingFlag = true;
-                    waitTime.attach(&triggerevent, &Triggerevent::phasePed, windowTimePed-waitPed);
+                    triggerevent.phasePed();
                     dFlag = false;
                     safety.attach(&triggerevent, &Triggerevent::standby, windowTimePed);
                 }
@@ -572,9 +552,9 @@ class Choosestate{
             }
         
         if(noOne){
-            if(triggerevent.getlights()==3 && priorEmpty()&& !triggerevent.waitingFlag){
+            if(triggerevent.getlights()==3 && priorEmpty()){
             pc.printf("default ");
-            waitTime.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL1-waitL1);
+            triggerevent.phaseL1();
             //safety.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL2);
             dFlag = true;
             }
@@ -586,6 +566,7 @@ Choosestate choosest;
 
 int main() {
     while(1){
-        choosest.choosestate(3, 3, 3,1,1,1);
+        choosest.choosestate(3, 3, 3);
+        wait(0.2);
     }
 }

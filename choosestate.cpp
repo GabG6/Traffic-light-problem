@@ -362,14 +362,9 @@ class Choosestate{
                         }
                         else{
                             /**if maximum have passed, turn lights red and reset count*/
-                            if(priorEmpty()){
-                                count = 0;
-                            }
-                            else{
                             pc.printf("cars over max\n\r");
                             triggerevent.standby();
-                            count = 0;
-                            }
+                            count = 0;                                
                         }
                     }
                 break;
@@ -453,14 +448,9 @@ class Choosestate{
                         }
                         else{
                             /**if maximum have passed, turn lights red and reset count*/
-                            if(priorEmpty()){
-                                count = 0;
-                            }
-                            else{
-                            pc.printf("cars over max\n\r");
+                            pc.printf("over max\n\r");
                             triggerevent.standby();
-                            count = 0;
-                            }                              
+                            count = 0;                                
                         }
                     }
                 break;
@@ -572,7 +562,7 @@ class Choosestate{
             }
         
         if(noOne){
-            if(triggerevent.getlights()==3 && priorEmpty()&& !triggerevent.waitingFlag){
+            if(triggerevent.getlights()==3 && priorEmpty()&& !triggerevent.waitingFlag&& !dFlag){
             pc.printf("default ");
             waitTime.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL1-waitL1);
             //safety.attach(&triggerevent, &Triggerevent::phaseL1, windowTimeL2);
@@ -587,5 +577,6 @@ Choosestate choosest;
 int main() {
     while(1){
         choosest.choosestate(3, 3, 3,1,1,1);
+        wait(0.5);
     }
 }
