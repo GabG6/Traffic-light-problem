@@ -2,21 +2,21 @@
 #include <ostream>
 #include <stdio.h>
 
-DigitalOut mBuzzer;
-DigitalOut mMotor;
-DigitalOut mL1g;
-DigitalOut mL1r;
-DigitalOut mL2g;
-DigitalOut mL2r;
-DigitalOut mPedg;
-DigitalOut mPedr;
-DigitalIn mL2IRTraffic;
-DigitalIn mL2IRWait;
-DigitalIn mL1IRTraffic;
-DigitalIn mL1IRWait;
-DigitalIn mPedButton;
+DigitalOut Buzzer(p22);
+DigitalOut Motor(p21);
+//DigitalOut L1g;
+DigitalOut L1r(p24);
+DigitalOut L2g(p25);
+DigitalOut L2r(p26);
+DigitalOut Pedg(p27);
+DigitalOut Pedr(p28);
+DigitalIn L2IRTraffic(p20);
+DigitalIn L2IRWait(p19);
+DigitalIn L1IRTraffic(p18);
+DigitalIn L1IRWait(p17);
+DigitalIn PedButton(p16);
 class TrafficLight;
-class PedestrianLight;
+class PedLight;
 
 /*class Interface{ // class that handles overriding and displaying the system
     private:
@@ -33,6 +33,64 @@ class PedestrianLight;
         }
     }
 };*/
+
+class ManagePrior{
+    private:
+    bool (&priority)[2][3];
+    public:
+    ManagePrior(bool (&prior)[2][3]):priority(prior){}
+
+    void changePrior(int action, int member){
+    switch(action*10+member){
+        case 1:
+        case 2:
+        case 3:
+            /**move priority up (clear)*/
+            for(int i=0; i<3;i++){
+                priority[0][i] = priority[1][i];
+                priority[1][i] = 0; 
+            }
+        break;
+        case 10:
+            //add L1 to p1
+            priority[0][0] = 1;
+        break;
+        case 11:
+            /**add L2 to p1*/
+            priority[0][1] = 1;
+        break;
+        case 12:
+            /**add ped to p1*/
+            priority[0][2] = 1;
+        break;
+        case 20:
+            /**add L1 to p2*/
+            priority[1][0] = 1;
+        break;
+        case 21:
+            /**add L2 to p2*/
+            priority[1][1] = 1;
+        break;
+        case 22:
+            /**add ped to p2*/
+            priority[1][2] = 1;
+        break;
+    }
+    }
+    bool hasPriority(int member){
+        if(priority[0][member]){
+            return true;
+        }
+    }
+    bool priorEmpty(){
+        if(!(priority[0][0]||priority[0][1]||priority[0][2])){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+};
 
 /**
  * @brief Class that computes a change in state of the sensor signals
@@ -87,23 +145,42 @@ class Flag{
     }
 };
 
+/**
+ * @class for controlling the state of the traffic lights
+ * @param prior priority array
+ * @param safetytime safety time
+ * @param waittime wait for green time
+ * @param isgreenbydefault choose if this is the main road
+ * @param carcount maximum car count
+ * @param waitsens wait sensor pin
+ * @param trafficsensor traffic sensor pin
+ * @param greenlight green light pin
+ * @param redlight red light pin
+*/
 class TrafficLight{
 private:
-    Timeout     safety;
-    Timeout     waitTime;
-    DigitalIn*  waitSensor;
-    DigitalIn*  trafficSensor;
-    DigitalOut* greenLight;
-    DigitalOut* redLight;
-    bool isGreenByDefault;
-    bool controlFlag;
-    int carCounter;
-    bool priority1Flag;
-    bool priority2Flag;
+    Timeout         safety;
+    Timeout         waitTime;
+    DigitalIn       waitSensor;
+    DigitalIn       trafficSensor;
+    DigitalOut      greenLight;
+    DigitalOut      redLight;
+    ManagePrior     managePriority;
+    int             lightNumber;
+    bool            (&priority)[2][3];
+    bool            isGreenByDefault;
+    bool            controlFlag;
+    int             carCounter;
 
 public:
-    TrafficLight():isGreenByDefault(1), carCounter(0){}
-    TrafficLight(bool gr_by_def, bool carcount):isGreenByDefault(gr_by_def), carCounter(carcount){}
+    //TrafficLight():isGreenByDefault(1), carCounter(0),controlFlag(0),priority1Flag(0),
+      //          priority2Flag(0),waitSensor(P0_0),trafficSensor(P0_0), greenLight(P0_0), redLight(P0_0){}
+    TrafficLight(int lightNum,bool (&prior)[2][3],int safetyTime,int waitTime,
+                bool gr_by_def, int carcount,PinName waitsens,PinName trafficsens,PinName grlight, PinName rdlight):
+                lightNumber(lightNum),priority(prior),isGreenByDefault(gr_by_def), carCounter(carcount),
+                waitSensor(waitsens),trafficSensor(trafficsens), greenLight(grlight), redLight(rdlight){
+                isGreenByDefault=1; carCounter=0;controlFlag=0;waitSensor=P0_0;
+                trafficSensor=P0_0; greenLight=P0_0; redLight=P0_0;lightNumber = 0;}
 
     bool isInControl(){
         return controlFlag;
@@ -117,43 +194,65 @@ public:
 
     }
 
-    void update_state(TrafficLight *otherLight, PedLight *pedLight){
-
+    bool update_state(bool othLightFlag, bool pedFlag){
+        
     }
 
-    void greenLight(){
-
+    void greenLightOn(){
+        greenLight = 1;
     }
 
-    void redLight(){
-
+    void redLightOn(){
+        redLight = 1;
+        controlFlag = false;
     }
 };
 
 class PedLight{
 private:
-    Timeout safetyTimer;
-    Timeout waitTimer;
-    bool controlFlag;
-    bool priority1Flag;
-    bool priority2Flag;
+    Timeout      safetyTimer;
+    Timeout      waitTimer;
+    DigitalOut   greenLight;
+    DigitalOut   redLight;
+    DigitalOut   motor;
+    DigitalOut   buzzer;
+    DigitalIn    button;
+    ManagePrior  managePriority;
+    int          lightNumber;
+    bool         controlFlag;
+    bool         (&priority)[2][3];
 public:
+    PedLight(int lightNum, bool (&prior)[2][3],int safetyTime, int waitTime, PinName grlight,
+            PinName rdlight,PinName moto, PinName buzz, PinName butto):
+            lightNumber(lightNum),priority(prior),greenLight(grlight),redLight(rdlight), motor(moto),buzzer(buzz),
+            button(butto),managePriority(priority){
+            controlFlag = 0; greenLight = P0_0; redLight = P0_0;
+            motor =P0_0; buzzer =P0_0, button = P0_0;lightNumber = 2;}
 
-    void updateState(TrafficLight *tL1, TrafficLight *tL2){
-
+    bool isInControl(){
+        return controlFlag;
     }
 
-    void greenLight(){
-
+    void updateState(bool tl1Flag,bool tl2Flag){
+        if(isInControl()){
+            if()
+        }
     }
-    void redLight(){
 
+    void greenLightOn(){
+        greenLight = 1;
     }
+    void redLightOn(){
+        controlFlag = false;
+    }
+    
 };
-
+bool priority[2][3] = {0,0,0,
+                       0,0,0};
+TrafficLight    tl1(0,priority,5,5,true,5,p17,p18,p23,p24);
+TrafficLight    tl2(1,priority,5,5,false,4,p19,p20,p25,p26);
+PedLight        ped1(2,priority, 12,3,p27,p28,p21,p22,p16);
 int main() {
-    while(1){
+    Serial pc(USBTX,USBRX);
 
-        wait(0.2);
-    }
 }
