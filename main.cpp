@@ -347,14 +347,14 @@ class TrafficLight{
          * @return boolean flag
         */
         bool hasCarArrived(){
-            return(arriveFlag.carArrive(waitSensor));
+            return(arriveFlag.carArrive(!waitSensor));
         }
         /**
          * @brief check if car left flag is on
          * @return boolean flag
         */
         bool hasCarLeft(){
-            return(leaveFlag.carLeft(waitSensor));
+            return(leaveFlag.carLeft(!waitSensor));
         }
         /**
          * @brief reset has car left flag
@@ -432,7 +432,7 @@ class TrafficLight{
                         resetLeftFlag();
                         resetArriveFlag();
                         startRed();
-                    } else if(!otherLFlag && !pedFlag && (isPrior1Empty() || isPriority1()) && !isInControl() && !isPriority2()){
+                    } else if(!isInControl()&& !otherLFlag && !pedFlag && (isPrior1Empty() || isPriority1()) && !isInControl() && !isPriority2()){
                             ///If other members dont have control and member has priority, member can turn on 
                             pc.printf("On by red for L%d\n\r", lightNumber+1);
                             ///Reset car counter
@@ -447,13 +447,13 @@ class TrafficLight{
                             resetArriveFlag();
                             startGreen();
                             startRed();
-                        } else if(!isInControl() || isPrior1Empty() || carCounter>maxCounter){
+                        } else if(!isInControl()){
                             ///Is waiting for other members
                             if(isPrior1Empty()){
                                 ///First one waiting, add to priority 1
                                 pc.printf(" adding L%d to priority 1\n\r", lightNumber+1);
                                 ///Counter reset for adding car after maximum to queue 
-                                carCounter = 0;
+                                
                                 addPriority1();
                             }
                             else if(!isPriority1() && !isPriority2() && isPrior2Empty()){
