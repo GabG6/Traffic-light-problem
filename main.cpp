@@ -275,9 +275,9 @@ class TrafficLight{
         /// @brief Current sequence car counter
         int             carCounter;
         /// @brief Default priority
-        bool arr[2][3];
+        bool            arr[2][3];
         /// @brief Console log object
-        Serial pc;
+        Serial          pc;
         /**
          * @brief Begin red light timeout
         */
@@ -490,7 +490,20 @@ class TrafficLight{
             carCounter = 0;
         }
 };
-
+/**
+ * @brief class to compute the state of the pedestrian light
+ * 
+ * Refer to class @class TrafficLight, slight logic changes, no default state, no counter
+ * @param Lightnum light number identifier
+ * @param prior reference to priority array
+ * @param safeTime the safety time in seconds
+ * @param waittime the wait time in seconds
+ * @param greenlight green light pin name
+ * @param redlight red light pin name
+ * @param motor motor pin name
+ * @param buzzer buzzer pin name
+ * @param button button pin name
+*/
 class PedLight{
     private:
         /// @brief Timeout object for the safety time
@@ -600,7 +613,7 @@ class PedLight{
         PedLight(int lightNum, bool (&prior)[2][3],int safeTime, int waTime, PinName grlight,
                 PinName rdlight,PinName moto, PinName buzz, PinName butto):pc(USBTX, USBRX),
                 lightNumber(lightNum),priority(prior),greenLight(grlight),redLight(rdlight), motor(moto),buzzer(buzz),
-                button(butto),managePriority(prior),waitTime(waTime),safetyTime(safeTime){
+                button(butto),managePriority(prior),waitTime(waTime),safetyTime(safeTime+waTime){
                 controlFlag = 0;lightNumber = 2; waitTime = 3;safetyTime = 10;}
 
         void updateState(bool tl1Flag,bool tl2Flag){
@@ -641,6 +654,8 @@ class PedLight{
         void greenLightOn(){
             greenLight = 1;
             redLight   = 0;
+            motor = 1;
+            buzzer = 1;
         }
         /**
          * @brief red on green off
@@ -648,6 +663,8 @@ class PedLight{
         void redLightOn(){
             redLight    = 1;
             greenLight  = 0;
+            motor = 0;
+            buzzer = 0;
             controlFlag = false;
         }
         /**
@@ -662,13 +679,16 @@ class PedLight{
 bool priority[2][3] = {0,0,0,
                        0,0,0};
 ///Initialise main traffic light                       
-TrafficLight    tl1(0,priority,4,1,1,3,p17,p18,p23,p24);
+TrafficLight    tl1(0,priority,4,1,1,3,p20,p18,p23,p24);
 ///Initialise second traffic light
 TrafficLight    tl2(1,priority,4,1,0,3,p19,p20,p25,p26);
 ///Initialise pedestrian light
-PedLight        ped1(2,priority, 12,3,p27,p28,p21,p22,p16);
+PedLight        ped1(2,priority, 12,3,p27,p28,p21,p22,p18);
 int main() {
     Serial pc(USBTX,USBRX);
+    tl2.redLightOn();
+    tl1.redLightOn();
+    ped1.redLightOn();
     while(1){
         ///Create state change machine, pass control flags cyclically
         tl1.update_state(tl2.isInControl(), ped1.isInControl());
