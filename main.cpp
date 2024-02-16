@@ -679,9 +679,9 @@ class PedLight{
 bool priority[2][3] = {0,0,0,
                        0,0,0};
 ///Initialise main traffic light                       
-TrafficLight    tl1(0,priority,4,1,1,3,p20,p18,p23,p24);
+TrafficLight    tl1(0,priority,4,1,1,3,p20,p11,p23,p24);
 ///Initialise second traffic light
-TrafficLight    tl2(1,priority,4,1,0,3,p19,p20,p25,p26);
+TrafficLight    tl2(1,priority,4,1,0,3,p19,p12,p25,p26);
 ///Initialise pedestrian light
 PedLight        ped1(2,priority, 12,3,p27,p28,p21,p22,p18);
 int main() {
