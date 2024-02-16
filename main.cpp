@@ -2,22 +2,6 @@
 #include <ostream>
 #include <stdio.h>
 
-/*class Interface{ // class that handles overriding and displaying the system
-    private:
-    Serial mMedium; Getstate getstate; Triggerevent Triggerevent;
-    public:
-    Interface(){}
-    Interface(PinName port1, PinName port2):mMedium(port1,port2){}
-    void display(){
-        mMedium.printf("working");
-    }
-    char override(){
-        if(mMedium.readable()){
-            return mMedium.getc();
-        }
-    }
-};*/
-
 /**
  * @brief Manage the priority matrix
  * 
