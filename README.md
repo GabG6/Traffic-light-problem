@@ -4,7 +4,7 @@ Operating a traffic light system with infrared sensors and led traffic lights.
 The system creates a state change machine which passes a control flag accross objects representing each member in the junction. The control flag signals if a member is currently in control of the traffic lights. The system uses this flag and a priority queue that assigns based on first come first served principle, to decide the order of the traffic light operation.
 When a member is in control, it triggers its green lightnafter a waiting time, and then triggers it's red light after a safety time, that begins once the light is green.
 ## Video of Assembled model operation
-https://github.com/GabG6/Traffic-light-problem/assets/97483291/772bfbe0-93ce-48d0-a15b-ef5c958dc228
+[https://github.com/GabG6/Traffic-light-problem/assets/97483291/772bfbe0-93ce-48d0-a15b-ef5c958dc228](https://github.com/GabG6/Traffic-light-problem/blob/main/20240216_105819846_iOS.heic)
 
 ## Scalability
 The System is designed with scalability in mind, it operates by creating pedestrian light and traffic light objects using two class structures for each one, with customisable parameters for each object.
