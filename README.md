@@ -4,6 +4,7 @@ Operating a traffic light system with infrared sensors and led traffic lights.
 The system creates a state change machine which passes a control flag accross objects representing each member in the junction. The control flag signals if a member is currently in control of the traffic lights. The system uses this flag and a priority queue that assigns based on first come first served principle, to decide the order of the traffic light operation.
 When a member is in control, it triggers its green lightnafter a waiting time, and then triggers it's red light after a safety time, that begins once the light is green.
 ## Video of Assembled model operation
+https://youtube.com/shorts/Xje8h0qc3gs?feature=share
 ![imag](TrafficImage.jpg)
 
 
