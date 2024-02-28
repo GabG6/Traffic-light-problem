@@ -5,7 +5,7 @@ The system creates a state change machine which passes a control flag accross ob
 The system uses this flag and a priority queue that assigns based on the first-come-first-served principle, to decide the order of the traffic light operation.
 When a member is in control, it triggers its green light after a waiting time, and then triggers it's red light after a safety time, that begins once the light is green.
 ## Video of Assembled model operation
-[![img src="TrafficImage.jpg" width="600" height="350"]](https://www.youtube.com/embed/EN0yVmQZrjU?si=6mwJkgkvUsU3K6I4)
+[<img src="TrafficImage.jpg" width="600" height="350">](https://www.youtube.com/embed/EN0yVmQZrjU?si=6mwJkgkvUsU3K6I4)
 
 
 ## Scalability
